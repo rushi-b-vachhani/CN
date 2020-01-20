@@ -12,6 +12,7 @@ compile with the command: gcc demo_tx.c rs232.c -Wall -Wextra -o2 -o test_tx
 
 #include <stdlib.h>
 #include <stdio.h>
+#include "checksum_algo.h"
 
 #ifdef _WIN32
 #include <Windows.h>
@@ -29,39 +30,38 @@ int main()
       cport_nr=0,        /* /dev/ttyS0 (COM1 on windows) */
       bdrate=9600;       /* 9600 baud */
 
-  char mode[]={'8','N','1',0},
-       str[2][512];
+  char mode[]={'8','N','1',0};
 
+  char userinput[512],transmitted[512];
+  scanf("%[^\n]",userinput);
 
-  strcpy(str[0], "The quick brown fox jumped over the lazy grey dog.\n");
-
-  strcpy(str[1], "Happy serial programming!\n");
-
+  strcpy(transmitted, userinput);
+  xor_gen(transmitted);
 
   if(RS232_OpenComport(cport_nr, bdrate, mode))
   {
     printf("Can not open comport\n");
-
     return(0);
   }
 
-  while(1)
+ 
+  RS232_cputs(cport_nr, transmitted);
+
+  printf("sent: %30s | [%s]\n", transmitted,userinput);
+  
+
+  // Acknowledgement Checking
+  /*
+  char buf[10];
+  int n = RS232_PollComport(cport_nr, buf, 4096);
+  if(n > 0)
   {
-    RS232_cputs(cport_nr, str[i]);
-
-    printf("sent: %s\n", str[i]);
-
-#ifdef _WIN32
-    Sleep(1000);
-#else
-    usleep(1000000);  /* sleep for 1 Second */
-#endif
-
-    i++;
-
-    i %= 2;
+    buf[n] = 0;
   }
-
+  if(buf[0]=='y')
+    print("True")
+  */
+ 
   return(0);
 }
 
